@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calcolatore di Torsione Non Lineare</title>
+<style>
+:root{--bg:#eef2f6;--card:#fff;--text:#14202b;--muted:#607181;--line:#ccd7e0;--navy:#0d3658;--blue:#1769aa;--cyan:#dff1fa;--red:#c44747;--green:#24835b;--shadow:0 4px 18px rgba(13,54,88,.09)}
+[data-theme="dark"]{--bg:#101820;--card:#18232d;--text:#eef5fa;--muted:#a8bac8;--line:#354653;--navy:#0a263e;--blue:#43a0df;--cyan:#203847;--red:#ff7b7b;--green:#50c58d;--shadow:0 4px 18px rgba(0,0,0,.25)}
+*{box-sizing:border-box}body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
+header{background:linear-gradient(125deg,var(--navy),#17679e);color:white;padding:24px 30px}.head{max-width:1450px;margin:auto;display:flex;justify-content:space-between;gap:20px;align-items:center}.head h1{margin:0 0 5px;font-size:25px}.head p{margin:0;opacity:.9}
+main{max-width:1450px;margin:20px auto;padding:0 18px 30px}.layout{display:grid;grid-template-columns:370px 1fr;gap:18px}.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;box-shadow:var(--shadow);margin-bottom:18px}.sticky{position:sticky;top:14px;align-self:start}.card h2{font-size:18px;margin:0 0 14px;color:var(--blue)}
+.section{border-top:1px solid var(--line);padding-top:14px;margin-top:14px}.section:first-of-type{border-top:0;padding-top:0;margin-top:0}.section-title{font-weight:700;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.full{grid-column:1/-1}label{display:block;font-size:12px;font-weight:650;margin-bottom:4px}input,select{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:7px;background:var(--card);color:var(--text);font-size:14px}input:focus,select:focus{outline:2px solid color-mix(in srgb,var(--blue) 30%,transparent);border-color:var(--blue)}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}button{border:0;border-radius:7px;padding:10px 13px;background:var(--blue);color:white;font-weight:700;cursor:pointer}button.alt{background:#526a7b}button.good{background:var(--green)}button:hover{filter:brightness(.94)}
+.formula{background:var(--cyan);border-left:4px solid var(--blue);padding:10px 12px;border-radius:5px;font-family:Cambria Math,serif;font-size:14px;line-height:1.8}.note{font-size:12px;color:var(--muted);line-height:1.48}.status{font-size:13px;font-weight:700;padding:9px 11px;border-radius:7px;margin-top:10px}.ok{background:color-mix(in srgb,var(--green) 18%,transparent);color:var(--green)}.warn{background:color-mix(in srgb,var(--red) 16%,transparent);color:var(--red)}
+.results{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px}.metric{border:1px solid var(--line);border-radius:9px;padding:12px;background:color-mix(in srgb,var(--card) 88%,var(--cyan))}.metric .k{font-size:12px;color:var(--muted)}.metric .v{font-size:19px;font-weight:750;margin-top:4px;color:var(--blue)}.metric .u{font-size:11px;color:var(--muted)}
+.tabs{display:flex;gap:8px;margin-bottom:12px}.tab{background:#607888}.tab.active{background:var(--blue)}canvas{display:block;width:100%;height:420px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+.table-wrap{max-height:520px;overflow:auto;border:1px solid var(--line);border-radius:8px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:7px 9px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}th{position:sticky;top:0;background:var(--navy);color:white;z-index:2}th:first-child,td:first-child{text-align:center}tr:hover td{background:var(--cyan)}
+.root-list{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.root-btn{background:#658093;font-size:12px;padding:7px 9px}.root-btn.active{background:var(--green)}
+@media(max-width:980px){.layout{grid-template-columns:1fr}.sticky{position:static}.results{grid-template-columns:repeat(2,1fr)}}@media(max-width:560px){.grid,.results{grid-template-columns:1fr}.head{align-items:flex-start}.head h1{font-size:21px}canvas{height:340px}}@media print{header,.actions,.tabs,#themeBtn{display:none}.layout{display:block}.sticky{position:static}.card{box-shadow:none;break-inside:avoid}.table-wrap{max-height:none;overflow:visible}canvas{height:350px}}
+</style>
+</head>
+<body>
+<header><div class="head"><div><h1>Calcolatore di torsione non lineare</h1><p>Trave lunga / pipeline con carico torcente dipendente dalla rotazione e vincolo non lineare</p></div><button id="themeBtn" class="alt" onclick="toggleTheme()">Tema scuro</button></div></header>
+<main><div class="layout">
+<aside class="card sticky">
+<h2>Dati di input</h2>
+<div class="section"><div class="section-title">Trave</div><div class="grid">
+<div><label for="L">Lunghezza L</label><input id="L" type="number" value="500" step="1"><small class="note">m</small></div>
+<div><label for="GJp">Rigidezza GJp</label><input id="GJp" type="number" value="800000" step="1000"><small class="note">kN·m²</small></div>
+</div></div>
+<div class="section"><div class="section-title">Momenti all'estremità x = L</div><div class="grid">
+<div><label for="ML">M_L</label><input id="ML" type="number" value="20" step="1"><small class="note">kN·m</small></div>
+<div><label for="Mecc">M_ecc</label><input id="Mecc" type="number" value="10" step="1"><small class="note">kN·m</small></div>
+</div></div>
+<div class="section"><div class="section-title">Tubo e terreno</div><div class="grid">
+<div><label for="Wsub">Peso immerso Wsub</label><input id="Wsub" type="number" value="1.383" step="0.001"><small class="note">kN/m</small></div>
+<div><label for="mu">Attrito laterale μ</label><input id="mu" type="number" value="0.40" step="0.01"><small class="note">adimensionale</small></div>
+<div><label for="OD">Diametro esterno OD</label><input id="OD" type="number" value="0.50" step="0.001"><small class="note">m</small></div>
+<div><label for="nPoints">Punti profilo</label><input id="nPoints" type="number" value="201" min="21" max="2001" step="20"></div>
+</div></div>
+<div class="section"><div class="section-title">Modello</div><div class="formula">
+m<sub>t</sub> = W<sub>sub</sub> μ OD / 2<br>
+θ<sub>0</sub> = T|T| / (2 GJ<sub>p</sub> m<sub>t</sub>)<br>
+θ<sub>L</sub> = θ<sub>0</sub> + TL/GJ<sub>p</sub><br>
+F(T) = T − M<sub>L</sub> − M<sub>ecc</sub> sin(θ<sub>L</sub>) = 0
+</div><p class="note">I dati predefiniti sono in kN, m e kN·m. Il calcolo mantiene questo sistema coerente.</p></div>
+<div class="actions"><button onclick="solve()">Calcola</button><button class="good" onclick="downloadCSV()">Esporta CSV</button><button class="alt" onclick="window.print()">Stampa / PDF</button></div>
+<div id="status" class="status ok">Pronto.</div>
+</aside>
+<section>
+<div class="card"><h2>Risultati dell'equilibrio selezionato</h2><div id="results" class="results"></div><div id="roots" class="root-list"></div></div>
+<div class="card"><h2>Grafici</h2><div class="tabs"><button id="tabRotation" class="tab active" onclick="setPlot('rotation')">Rotazione θ(x)</button><button id="tabResidual" class="tab" onclick="setPlot('residual')">Residuo F(T)</button><button id="tabIntersection" class="tab" onclick="setPlot('intersection')">Intersezione momenti</button></div><canvas id="chart"></canvas><p id="plotNote" class="note"></p></div>
+<div class="card"><h2>Profilo della rotazione</h2><div class="table-wrap"><table id="profileTable"></table></div></div>
+</section>
+</div></main>
+<script>
+'use strict';
+let state={solutions:[],selected:0,profile:[],plot:'rotation',p:null};
+const $=id=>document.getElementById(id); const val=id=>Number($(id).value);
+function fmt(x,d=6){if(!Number.isFinite(x))return '—';return x.toLocaleString('it-IT',{maximumFractionDigits:d,minimumFractionDigits:Math.min(d,2)});}
+function toggleTheme(){const root=document.documentElement,dark=root.getAttribute('data-theme')==='dark';root.setAttribute('data-theme',dark?'light':'dark');$('themeBtn').textContent=dark?'Tema scuro':'Tema chiaro';draw();}
+function readInputs(){return {L:val('L'),GJp:val('GJp'),ML:val('ML'),Mecc:val('Mecc'),Wsub:val('Wsub'),mu:val('mu'),OD:val('OD'),n:Math.round(val('nPoints'))};}
+function validate(p){return p.L>0&&p.GJp>0&&p.Wsub>0&&p.mu>0&&p.OD>0&&p.n>=21&&p.n<=2001&&[p.ML,p.Mecc].every(Number.isFinite);}
+function model(p){const mt=p.Wsub*p.mu*p.OD/2;const theta0=T=>T*Math.abs(T)/(2*p.GJp*mt);const thetaL=T=>theta0(T)+T*p.L/p.GJp;const residual=T=>T-p.ML-p.Mecc*Math.sin(thetaL(T));return {mt,theta0,thetaL,residual};}
+function bisect(f,a,b){let fa=f(a),fb=f(b);if(Math.abs(fa)<1e-12)return a;if(Math.abs(fb)<1e-12)return b;for(let i=0;i<100;i++){const c=(a+b)/2,fc=f(c);if(Math.abs(fc)<1e-11||Math.abs(b-a)<1e-10)return c;if(fa*fc<=0){b=c;fb=fc}else{a=c;fa=fc}}return(a+b)/2;}
+function findRoots(p,m){if(Math.abs(p.Mecc)<1e-14)return [p.ML];const lo=p.ML-Math.abs(p.Mecc),hi=p.ML+Math.abs(p.Mecc),N=30000,roots=[];let a=lo,fa=m.residual(a);for(let i=1;i<=N;i++){const b=lo+(hi-lo)*i/N,fb=m.residual(b);if(Math.abs(fa)<1e-9)roots.push(a);if(fa*fb<0)roots.push(bisect(m.residual,a,b));a=b;fa=fb;}if(Math.abs(fa)<1e-9)roots.push(hi);return roots.sort((x,y)=>x-y).filter((r,i,a)=>i===0||Math.abs(r-a[i-1])>Math.max(1e-7,1e-8*Math.abs(r)));}
+function tangent(p,m,T){const dtheta=p.L/p.GJp+Math.abs(T)/(p.GJp*m.mt);return 1-p.Mecc*Math.cos(m.thetaL(T))*dtheta;}
+function solve(){const p=readInputs();if(!validate(p)){$('status').className='status warn';$('status').textContent='Controllare gli input: L, GJp, Wsub, μ e OD devono essere positivi.';return;}const m=model(p),roots=findRoots(p,m);state.p=p;state.m=m;state.solutions=roots.map(T=>({T,theta0:m.theta0(T),thetaL:m.thetaL(T),res:m.residual(T),slope:tangent(p,m,T)}));state.selected=Math.min(state.selected,Math.max(0,roots.length-1));$('status').className='status '+(roots.length?'ok':'warn');$('status').textContent=roots.length?`Trovate ${roots.length} soluzione/i di equilibrio nell'intervallo fisico [M_L−|M_ecc|, M_L+|M_ecc|].`:'Nessuna radice individuata.';render();}
+function selectRoot(i){state.selected=i;render();}
+function render(){const p=state.p,m=state.m;if(!state.solutions.length){$('results').innerHTML='';$('roots').innerHTML='';$('profileTable').innerHTML='';draw();return;}const s=state.solutions[state.selected];const elastic=s.T*p.L/p.GJp;const deg=180/Math.PI;const metrics=[['m_t',m.mt,'kN·m/m'],['T di equilibrio',s.T,'kN·m'],['θ(0)',s.theta0,'rad'],['θ(0)',s.theta0*deg,'deg'],['TL/GJp',elastic,'rad'],['θ(L)',s.thetaL,'rad'],['θ(L)',s.thetaL*deg,'deg'],['F(T)',s.res,'kN·m'],["F'(T)",s.slope,'-']];$('results').innerHTML=metrics.map(q=>`<div class="metric"><div class="k">${q[0]}</div><div class="v">${fmt(q[1],Math.abs(q[1])<.01?8:5)}</div><div class="u">${q[2]}</div></div>`).join('');$('roots').innerHTML=state.solutions.map((r,i)=>`<button class="root-btn ${i===state.selected?'active':''}" onclick="selectRoot(${i})">Soluzione ${i+1}: T=${fmt(r.T,4)} kN·m</button>`).join('');state.profile=[];for(let i=0;i<p.n;i++){const x=p.L*i/(p.n-1),th=s.theta0+s.T*x/p.GJp;state.profile.push({x,rad:th,deg:th*deg});}buildTable();draw();}
+function buildTable(){let h='<thead><tr><th>#</th><th>x [m]</th><th>θ [rad]</th><th>θ [deg]</th><th>T interno [kN·m]</th></tr></thead><tbody>';const T=state.solutions[state.selected].T;state.profile.forEach((r,i)=>h+=`<tr><td>${i+1}</td><td>${fmt(r.x,3)}</td><td>${fmt(r.rad,8)}</td><td>${fmt(r.deg,6)}</td><td>${fmt(T,5)}</td></tr>`);$('profileTable').innerHTML=h+'</tbody>';}
+function setPlot(type){state.plot=type;['Rotation','Residual','Intersection'].forEach(n=>$('tab'+n).classList.toggle('active',type===n.toLowerCase()));draw();}
+function drawAxes(ctx,W,H,xmin,xmax,ymin,ymax,xlabel,ylabel){const m={l:78,r:25,t:25,b:60},pw=W-m.l-m.r,ph=H-m.t-m.b,X=x=>m.l+(x-xmin)/(xmax-xmin||1)*pw,Y=y=>m.t+ph-(y-ymin)/(ymax-ymin||1)*ph;ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--line');ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--muted');ctx.font='12px Segoe UI';for(let i=0;i<=6;i++){const yy=ymin+(ymax-ymin)*i/6,py=Y(yy);ctx.beginPath();ctx.moveTo(m.l,py);ctx.lineTo(W-m.r,py);ctx.stroke();ctx.textAlign='right';ctx.fillText(fmt(yy,Math.abs(ymax-ymin)<1?4:2),m.l-8,py+4);const xx=xmin+(xmax-xmin)*i/6,px=X(xx);ctx.beginPath();ctx.moveTo(px,m.t);ctx.lineTo(px,H-m.b);ctx.stroke();ctx.textAlign='center';ctx.fillText(fmt(xx,2),px,H-m.b+20);}ctx.strokeStyle='#607585';ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(m.l,m.t);ctx.lineTo(m.l,H-m.b);ctx.lineTo(W-m.r,H-m.b);ctx.stroke();ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--text');ctx.textAlign='center';ctx.fillText(xlabel,m.l+pw/2,H-14);ctx.save();ctx.translate(18,m.t+ph/2);ctx.rotate(-Math.PI/2);ctx.fillText(ylabel,0,0);ctx.restore();return{X,Y,m};}
+function line(ctx,pts,X,Y,color,width=2.4){ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(X(p[0]),Y(p[1])):ctx.moveTo(X(p[0]),Y(p[1])));ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();}
+function draw(){const c=$('chart'),r=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1;c.width=r.width*dpr;c.height=r.height*dpr;const ctx=c.getContext('2d');ctx.scale(dpr,dpr);const W=r.width,H=r.height;ctx.clearRect(0,0,W,H);if(!state.p||!state.solutions.length){ctx.fillStyle='#777';ctx.fillText('Nessun risultato da visualizzare.',30,40);return;}const p=state.p,m=state.m,s=state.solutions[state.selected],blue=getComputedStyle(document.documentElement).getPropertyValue('--blue'),red=getComputedStyle(document.documentElement).getPropertyValue('--red'),green=getComputedStyle(document.documentElement).getPropertyValue('--green');if(state.plot==='rotation'){const pts=state.profile.map(q=>[q.x,q.deg]),ys=pts.map(q=>q[1]),pad=Math.max(1e-6,(Math.max(...ys)-Math.min(...ys))*.08),a=drawAxes(ctx,W,H,0,p.L,Math.min(...ys)-pad,Math.max(...ys)+pad,'x [m]','Rotazione θ [deg]');line(ctx,pts,a.X,a.Y,blue);$('plotNote').textContent='Profilo lineare della rotazione lungo la trave per la soluzione selezionata.';}else{const lo=p.ML-Math.abs(p.Mecc),hi=p.ML+Math.abs(p.Mecc),N=1200,ts=Array.from({length:N+1},(_,i)=>lo+(hi-lo)*i/N);if(state.plot==='residual'){const pts=ts.map(T=>[T,m.residual(T)]),ys=pts.map(q=>q[1]),span=Math.max(...ys)-Math.min(...ys)||1,a=drawAxes(ctx,W,H,lo,hi,Math.min(...ys)-.05*span,Math.max(...ys)+.05*span,'T [kN·m]','F(T) [kN·m]');line(ctx,pts,a.X,a.Y,red);line(ctx,[[lo,0],[hi,0]],a.X,a.Y,'#777',1);state.solutions.forEach(q=>{ctx.beginPath();ctx.arc(a.X(q.T),a.Y(0),5,0,2*Math.PI);ctx.fillStyle=green;ctx.fill();});$('plotNote').textContent='Gli indicatori verdi rappresentano tutte le radici rilevate del residuo.';}else{const pts1=ts.map(T=>[T,T]),pts2=ts.map(T=>[T,p.ML+p.Mecc*Math.sin(m.thetaL(T))]),ys=pts1.concat(pts2).map(q=>q[1]),span=Math.max(...ys)-Math.min(...ys)||1,a=drawAxes(ctx,W,H,lo,hi,Math.min(...ys)-.05*span,Math.max(...ys)+.05*span,'T candidato [kN·m]','Momento [kN·m]');line(ctx,pts1,a.X,a.Y,blue);line(ctx,pts2,a.X,a.Y,red);state.solutions.forEach(q=>{ctx.beginPath();ctx.arc(a.X(q.T),a.Y(q.T),5,0,2*Math.PI);ctx.fillStyle=green;ctx.fill();});$('plotNote').textContent='Blu: T interno. Rosso: M_L + M_ecc sin(θ_L). Verde: punti di equilibrio.';}}}
+function downloadCSV(){if(!state.profile.length)return;const s=state.solutions[state.selected],p=state.p,m=state.m;let csv='Parametro,Valore,Unita\n'+`L,${p.L},m\nGJp,${p.GJp},kN*m^2\nM_L,${p.ML},kN*m\nM_ecc,${p.Mecc},kN*m\nWsub,${p.Wsub},kN/m\nmu,${p.mu},-\nOD,${p.OD},m\nmt,${m.mt},kN*m/m\nTorque,${s.T},kN*m\ntheta_0,${s.theta0},rad\ntheta_L,${s.thetaL},rad\n\nx_m,theta_rad,theta_deg,torque_kNm\n`;state.profile.forEach(r=>csv+=`${r.x},${r.rad},${r.deg},${s.T}\n`);const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='torsione_nonlineare_risultati.csv';a.click();URL.revokeObjectURL(a.href);}
+['L','GJp','ML','Mecc','Wsub','mu','OD','nPoints'].forEach(id=>$(id).addEventListener('change',solve));window.addEventListener('resize',draw);solve();
+</script>
+</body>
+</html>
